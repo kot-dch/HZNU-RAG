@@ -314,3 +314,192 @@ feat: 拒答闸门增加分档逻辑
 | 补东西进上一个提交 | `git add 文件` → `git commit --amend --no-edit` |
 | 看历史 | `git log --oneline` |
 | push 被拒 | `git pull --rebase` → `git push` |
+| 连不上 GitHub | 见下方「十二」 |
+
+---
+
+## 十二、⚠️ push 报「连不上 github.com」怎么办
+
+### 症状
+
+```
+fatal: unable to access 'https://github.com/kot-dch/HZNU-RAG.git/':
+Failed to connect to github.com port 443 after 21099 ms: Could not connect to server
+```
+
+### 原因
+
+**git 不会自动使用系统代理，而浏览器和 PowerShell 会。**
+
+这台机器上开着代理（Clash Verge，监听 `127.0.0.1:7890`）：
+
+| 程序 | 是否走代理 | 能否连上 GitHub |
+| --- | --- | --- |
+| 浏览器 | ✅ 自动读系统代理设置 | 能 |
+| PowerShell（`Invoke-WebRequest`） | ✅ 自动读系统代理设置 | 能 |
+| **git** | ❌ **默认不走**，直连 443 端口 | **被墙，失败** |
+
+所以会出现"浏览器能打开 GitHub，但 git push 失败"这种看起来很矛盾的现象。
+
+### 解决：给 git 显式配置代理
+
+先确认代理端口是通的：
+
+```powershell
+Test-NetConnection -ComputerName 127.0.0.1 -Port 7890 -WarningAction SilentlyContinue
+# 看 TcpTestSucceeded 是不是 True
+```
+
+端口通了就配置：
+
+```powershell
+git config --global http.proxy  "http://127.0.0.1:7890"
+git config --global https.proxy "http://127.0.0.1:7890"
+```
+
+然后重新 push：
+
+```powershell
+git push
+```
+
+> 端口号可能不是 7890。在 Clash Verge 的「设置 → 端口」里能看到实际值
+> （常见还有 7897、10809）。
+
+### ⚠️ 换个网络后要记得取消
+
+**代理配置是全局的**，如果之后你去了没有 Clash 的网络（比如教室、图书馆、
+或者关了代理），git 会因为连不上 `127.0.0.1:7890` 而**全部失败**，报错是：
+
+```
+Failed to connect to 127.0.0.1 port 7890: Connection refused
+```
+
+那时候要取消代理：
+
+```powershell
+git config --global --unset http.proxy
+git config --global --unset https.proxy
+```
+
+### 怎么判断当前该开还是该关
+
+```powershell
+# 看代理配置
+git config --global http.proxy
+
+# 看代理端口通不通
+Test-NetConnection -ComputerName 127.0.0.1 -Port 7890 -WarningAction SilentlyContinue
+```
+
+| 代理端口状态 | 该怎么做 |
+| --- | --- |
+| 通（Clash 在跑） | 配置 git 代理 |
+| 不通（Clash 没开） | 取消 git 代理 |
+
+### 其他备选方案
+
+1. **改用 SSH 协议**（不受 HTTP 代理影响，但需要生成 SSH 密钥并传到 GitHub）
+2. **换个时段重试** —— GitHub 在国内的连通性是**间歇性**的。
+   实测过：同一个 `git push` 两次都失败，过一会儿 `git ls-remote` 却成功了。
+3. **手机热点** —— 有时候换个出口网络就好了
+
+### 怎么确认是不是网络问题，而不是 git 用错了
+
+```powershell
+# 测试 git 能否读到远程（只读操作，不推送）
+git ls-remote --heads https://github.com/kot-dch/HZNU-RAG.git
+```
+
+- **能列出 `refs/heads/main`** → 网络通，问题在别处
+- **报连接失败** → 就是网络/代理问题
+
+---
+
+## 十三、一次完整实操记录（真实执行过）
+
+下面是我在你这台机器上实际跑通的完整流程，可以对照着做。
+
+### 起点：改一个文件
+
+用编辑器打开 `README.md`，在「快速开始」下面加一段提示，保存。
+
+### 第 1 步：看改了什么
+
+```powershell
+cd C:\Users\Administrator\Desktop\campus-knowledge-rag
+git status --short
+```
+
+输出：
+
+```
+ M README.md
+?? docs/本地改文件同步到GitHub.md
+```
+
+- ` M`（空格+M）= 已修改但未暂存
+- `??` = 新文件，git 还没追踪
+
+### 第 2 步：确认改动内容
+
+```powershell
+git diff
+```
+
+输出（`+` 是新增的行）：
+
+```
+@@ -24,6 +24,10 @@
+ ## 快速开始
+
++> **本地开发提示**：修改代码后同步到 GitHub 只需三步 ——
++> `git add -A` → `git commit -m "说明"` → `git push`。
++> 详细流程见 [`docs/本地改文件同步到GitHub.md`](...)。
++
+ **不需要任何 API Key、不需要向量数据库、不需要下载模型权重。**
+```
+
+### 第 3 步：暂存并提交
+
+```powershell
+git add -A
+git commit -m "docs: 补充本地开发与同步流程说明"
+```
+
+提交后 `git status` 会显示：
+
+```
+On branch main
+Your branch is ahead of 'origin/main' by 1 commit.     ← 关键：领先远程 1 个提交
+```
+
+**这时候 GitHub 上还是旧的！** 本地新提交 `bb28c90`，远程还是 `2274aca`。
+
+### 第 4 步：推送
+
+```powershell
+git push
+```
+
+第一次失败（网络问题，见第「十二」节），配好代理后重试：
+
+```
+To https://github.com/kot-dch/HZNU-RAG.git
+   2274aca..bb28c90  main -> main          ← 这行是成功的标志
+```
+
+### 第 5 步：验证
+
+```powershell
+git status
+# → Your branch is up to date with 'origin/main'.    ← 已同步
+
+git rev-parse HEAD          # 本地
+git rev-parse origin/main   # 远程
+# 两个哈希相同 = 同步完成
+```
+
+再去浏览器看 <https://github.com/kot-dch/HZNU-RAG>，
+点 **Commits** 能看到新提交和它的说明文字。
+
