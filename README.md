@@ -290,10 +290,11 @@ python tests/test_rag.py      # 37 项，覆盖 8 个模块
 
 ---
 
-## 详细文档
+## 更多文档
 
-- [`README-详细版.md`](README-详细版.md) — 更长的实现说明与调参过程记录
+- [`docs/项目结构.md`](docs/项目结构.md) — 完整目录结构、数据流向、几个设计约定
 - [`rag/config.py`](rag/config.py) — 所有可调参数，注释里写了每个值的来历
+- [`NOTICE.md`](NOTICE.md) — 语料来源与使用声明
 
 ## License
 
