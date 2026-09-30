@@ -1,0 +1,59 @@
+# 忽略规则
+#
+# 目标：仓库只装源码、测试、评测集和语料；生成物与本机配置一律不入库。
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+.conda/
+
+# 打包/构建产物
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 测试与类型检查缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---------- 索引生成物 ----------
+# 这些由 `python -m rag.cli_index` 生成，不需要入库：
+#   · vectors.npy  约 1.2MB，克隆后重建只要 0.5 秒
+#   · chunks.json  由语料切分得到
+#   · 把生成物排除，还能保证"指标来自当前代码+当前语料"这件事是真实的
+rag/data/
+!rag/data/.gitkeep
+
+# ---------- 本机配置 / 密钥 ----------
+.env
+.env.*
+!.env.example
+*.local
+secrets.json
+
+# ---------- 编辑器 / 系统 ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 日志 / 临时文件 ----------
+*.log
+*.tmp
+*.bak
+~$*

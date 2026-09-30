@@ -1,0 +1,20 @@
+# 依赖清单
+#
+# 安装：
+#   pip install -r requirements.txt
+#
+# 说明：
+#   · numpy / requests 是核心依赖，必须装
+#   · fastapi / uvicorn / pydantic 只在跑 HTTP 服务时需要
+#     （不用服务、只用命令行时可以不装）
+#   · 本项目**不需要**向量数据库、不需要 PyTorch、不需要下载任何模型权重：
+#     默认用本地 n-gram 特征哈希做向量化，索引是 numpy 矩阵，
+#     检索就是一次矩阵乘法。数据量在几千块以内完全够用，且完全离线。
+
+numpy>=1.24
+requests>=2.28
+
+# HTTP 服务（可选）
+fastapi>=0.110
+uvicorn>=0.27
+pydantic>=2.5

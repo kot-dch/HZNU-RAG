@@ -1,0 +1,39 @@
+# 统一换行符，避免跨平台克隆后文件内容被改写
+#
+# 为什么需要：Windows 上 git 默认会把 LF 转成 CRLF。
+# 本项目的语料是纯文本（data/docs/*.txt），如果换行符被转换：
+#   · 文档字符数会变化（每个 \n 变成 \r\n，多一个字符）
+#   · 切分结果与片段数会漂移，别人克隆后跑出的指标和 README 里的对不上
+#   · 我的自检脚本统计"字数"也会随之改变
+# 所以这里显式声明：仓库内一律用 LF 存储，检出时不转换。
+
+* text=auto eol=lf
+
+# 明确按文本处理（需要跨平台一致的）
+*.py      text eol=lf
+*.md      text eol=lf
+*.txt     text eol=lf
+*.json    text eol=lf
+*.ps1     text eol=lf
+*.js      text eol=lf
+*.wxml    text eol=lf
+*.wxss    text eol=lf
+*.yaml    text eol=lf
+*.yml     text eol=lf
+
+# 二进制文件不做任何转换
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.webp    binary
+*.ico     binary
+*.pdf     binary
+*.zip     binary
+*.npy     binary
+*.odttf   binary
+*.docx    binary
+*.xlsx    binary
+
+# 语言统计（GitHub 上"Languages"栏不把语料算进去）
+data/docs/*  linguist-vendored
