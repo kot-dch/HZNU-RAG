@@ -24,6 +24,10 @@
 
 ## 快速开始
 
+> **本地开发提示**：修改代码后同步到 GitHub 只需三步 ——
+> `git add -A` → `git commit -m "说明"` → `git push`。
+> 详细流程见 [`docs/本地改文件同步到GitHub.md`](docs/本地改文件同步到GitHub.md)。
+
 **不需要任何 API Key、不需要向量数据库、不需要下载模型权重。**
 
 ```bash
